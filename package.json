@@ -1,0 +1,35 @@
+{
+  "name": "gg-scripts",
+  "version": "0.0.1",
+  "description": "gg scripts",
+  "main": "src/cli-scripts.js",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint --config ./config/eslintrc.js src",
+    "format": "prettier-eslint --eslint-config-path ./config/eslintrc.js --write \"./src/**/*.js\""
+  },
+  "keywords": [],
+  "bin": {
+    "gg-scripts": "src/cli-scripts.js"
+  },
+  "author": "George <7jagjag@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/g3org3/gg-scripts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/g3org3/gg-scripts/issues"
+  },
+  "homepage": "https://github.com/g3org3/gg-scripts#readme",
+  "dependencies": {
+    "eslint": "^4.18.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "jest": "^22.4.2",
+    "prettier-eslint-cli": "^4.7.1"
+  }
+}
