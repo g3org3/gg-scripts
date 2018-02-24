@@ -29,6 +29,7 @@ const formatScript = () => {
 }
 
 const testScript = (options={}) => {
+  lintScript()
   const flags = []
   if (options.coverage) flags.push('--coverage')
   else if (options.watch) flags.push('--watch')
