@@ -27,6 +27,7 @@ const formatScript = (write = true) => {
     eslintConfigPath
   ]
   if (write) options.push('--write')
+  else options.push('--list-difference')
   return spawnSync(prettierEslint, options, { stdio: 'inherit' })
 }
 
