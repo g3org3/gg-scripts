@@ -27,7 +27,7 @@ const formatScript = (write = true) => {
     eslintConfigPath
   ]
   if (write) options.push('--write')
-  else options.push('--list-difference')
+  else options.push('--list-different')
   return spawnSync(prettierEslint, options, { stdio: 'inherit' })
 }
 
@@ -57,7 +57,7 @@ switch (cmd) {
   case 'test:w': {
     process.exit(testScript({ watch: true }))
   }
-  case 'lint-difference': {
+  case 'lint-different': {
     process.exit(formatScript(false))
   }
   default:
