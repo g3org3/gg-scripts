@@ -1,6 +1,6 @@
 {
   "name": "gg-scripts",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "gg scripts",
   "main": "src/cli-scripts.js",
   "scripts": {
