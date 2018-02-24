@@ -2,24 +2,21 @@
 const spawnSync = require('child_process').spawnSync
 const path = require('path')
 
-const args = process.argv.slice(2)
-const cmd = args[0]
-switch (cmd) {
-  case 'lint': {
-    const eslint = path.resolve(__dirname, '../node_modules/.bin/eslint')
-    const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js')
-    const result = spawnSync(eslint, ['--config', eslintConfigPath, './src'], {
-      stdio: 'inherit'
-    })
-    process.exit(result.signal)
-  }
-  case 'format': {
-    const eslint = path.resolve(__dirname, '../node_modules/eslint')
-    const prettierEslint = path.resolve(
-      __dirname,
-      '../node_modules/.bin/prettier-eslint'
-    )
-    const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js')
+// Find paths
+const eslintcli = path.resolve(__dirname, '../node_modules/.bin/eslint')
+const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js')
+const eslint = path.resolve(__dirname, '../node_modules/eslint')
+const jest = path.resolve(__dirname, '../node_modules/.bin/jest')
+const prettierEslint = path.resolve(
+  __dirname,
+  '../node_modules/.bin/prettier-eslint'
+)
+
+
+// Scripts
+const lintScript = () => spawnSync(eslintcli, ['--config', eslintConfigPath, './src'], { stdio: 'inherit' })
+
+const formatScript = () => {
     const options = [
       './src/**/*.js',
       '--eslint-path',
@@ -28,20 +25,35 @@ switch (cmd) {
       eslintConfigPath,
       '--write'
     ]
-    const result = spawnSync(prettierEslint, options, { stdio: 'inherit' })
-    process.exit(result.signal)
+  return spawnSync(prettierEslint, options, { stdio: 'inherit' })
+}
+
+const testScript = (options={}) => {
+  const flags = []
+  if (options.coverage) flags.push('--coverage')
+  else if (options.watch) flags.push('--watch')
+  return spawnSync(jest, flags, { stdio: 'inherit' })
+}
+
+const args = process.argv.slice(2)
+const cmd = args[0]
+switch (cmd) {
+  case 'lint': {  
+    process.exit(lintScript())
+  }
+  case 'format': {
+    process.exit(formatScript())
   }
   case 'test': {
-    const jest = path.resolve(__dirname, '../node_modules/.bin/jest')
-    const result = spawnSync(jest, { stdio: 'inherit' })
-    process.exit(result.signal)
+    process.exit(testScript())
+  }
+  case 'coverage': {
+    process.exit(testScript({ coverage: true }))
   }
   case 'test:w': {
-    const jest = path.resolve(__dirname, '../node_modules/.bin/jest')
-    const result = spawnSync(jest, ['--watch'], { stdio: 'inherit' })
-    process.exit(result.signal)
+    process.exit(testScript({ watch: true }))
   }
   default:
-    console.log(`Unknown script "${cmd}".`)
+    console.log(`Unknown command "${cmd}".`)
     process.exit(1)
 }
