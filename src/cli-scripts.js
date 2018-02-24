@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 const spawnSync = require('child_process').spawnSync
 const path = require('path')
+const isLinked = __dirname.indexOf('node_modules') === -1
+const resolve = (isLinked, filepath) => isLinked?
+  path.resolve(__dirname, `../${filepath}`)
+  : `./${filepath}`
 
 // Find paths
-const eslintcli = path.resolve(__dirname, '../node_modules/.bin/eslint')
+const eslint = resolve('node_modules/eslint')
+const jest = resolve('node_modules/.bin/jest')
+const eslintcli = resolve('node_modules/.bin/eslint')
+const prettierEslint = resolve('node_modules/.bin/prettier-eslint')
 const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js')
-const eslint = path.resolve(__dirname, '../node_modules/eslint')
-const jest = path.resolve(__dirname, '../node_modules/.bin/jest')
-const prettierEslint = path.resolve(
-  __dirname,
-  '../node_modules/.bin/prettier-eslint'
-)
 
 
 // Scripts
