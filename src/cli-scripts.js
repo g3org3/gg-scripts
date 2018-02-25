@@ -177,6 +177,12 @@ const dockerPushScript = pkg => {
   spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`])
 }
 
+const remoteStopApp = () => {
+  // TODO: change pkg to middleware
+  const pkg = JSON.parse(fs.readFileSync('./package.json'))
+  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml stop" 2> /dev/null`)
+}
+
 const deployScript = () => {
   const pkgJSON = isFileAvailable('package.json')
   if (pkgJSON) {
@@ -266,7 +272,8 @@ switch (cmd) {
     process.exit(lintScript().status)
   }
   case 'format': {
-    process.exit(formatScript(true).status)
+    formatScript(true).status
+    break
   }
   case 'test': {
     process.exit(testScript().status)
@@ -305,6 +312,10 @@ switch (cmd) {
   }
   case 'deploy': {
     deployScript()
+    break
+  }
+  case 'remote-stop': {
+    remoteStopApp() // experimental
     break
   }
   case 'deploy-init': {
