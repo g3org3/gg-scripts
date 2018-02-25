@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/g3org3/gg-scripts#readme",
   "dependencies": {
+    "enquirer": "^1.0.3",
     "eslint": "^4.18.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.9.0",
@@ -31,6 +32,9 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^22.4.2",
-    "prettier-eslint-cli": "^4.7.1"
+    "prettier-eslint-cli": "^4.7.1",
+    "prompt-confirm": "^1.2.0",
+    "prompt-input": "^3.0.0",
+    "prompt-radio": "^1.2.1"
   }
 }
