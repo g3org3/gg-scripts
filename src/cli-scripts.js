@@ -31,7 +31,7 @@ const lintScript = () =>
 const replaceAll = (target, search, replacement) =>
   target.replace(new RegExp(search, 'g'), replacement)
 
-const isCommandAvailable = (cmd) => {
+const isCommandAvailable = cmd => {
   try {
     execSync(`which ${cmd} 2> /dev/null`)
     return true
@@ -39,9 +39,10 @@ const isCommandAvailable = (cmd) => {
     console.log(`\n⚠️  ${cmd} is not available.\n`)
   }
 }
-const isDockerStuffIsAvailable = () => isCommandAvailable('docker') && isCommandAvailable('docker-compose')
+const isDockerStuffIsAvailable = () =>
+  isCommandAvailable('docker') && isCommandAvailable('docker-compose')
 
-const formatScript = (listDiferrent) => {
+const formatScript = listDiferrent => {
   const options = [
     './src/**/*.js',
     '--eslint-path',
@@ -64,6 +65,7 @@ const testScript = (options = {}) => {
   return { status: 1 }
 }
 
+/*
 const buildFrontEndScript = () => {
   try {
     // execSync('rm -fr public')
@@ -87,42 +89,63 @@ const buildFrontEndScript = () => {
   //   echo "> done!"
   // )
 }
-
-const deployScript = () => isCommandAvailable('ansible-playbook') &&
-  spawnSync('ansible-playbook', ['-v', 'deploy/update.yml'], { stdio: 'inherit' })
+*/
 
 const deployInitScript = () => {
   const pkg = JSON.parse(fs.readFileSync('./package.json'))
   try {
-    const dockerCompose = fs.readFileSync('./docker/docker-compose.yml').toString()
-    const dockerComposeProd = replaceAll(dockerCompose, 'build: \.', `image: registry.jorgeadolfo.com/${pkg.name}:latest`)
+    const dockerCompose = fs
+      .readFileSync('./docker/docker-compose.yml')
+      .toString()
+    const dockerComposeProd = replaceAll(
+      dockerCompose,
+      `image: registry.jorgeadolfo.com/${pkg.name}:dev`,
+      `image: registry.jorgeadolfo.com/${pkg.name}:latest`
+    )
     fs.writeFileSync('./docker/docker-compose.prod.yml', dockerComposeProd)
-    
+
     console.log(` creating ${pkg.name} in the remote server`)
     execSync(`ssh jorgeadolfo.com "mkdir /opt/g3org3/${pkg.name}" 2> /dev/null`)
-    
+
     console.log(' transfering file to server')
-    execSync(`scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${pkg.name}/docker-compose.yml`)
+    execSync(
+      `scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${
+        pkg.name
+      }/docker-compose.yml`
+    )
     execSync('rm ./docker/docker-compose.prod.yml')
     console.log(' ✨ done')
   } catch (err) {
-    if (err.message.trim().split('\n')[0].indexOf(`mkdir`) === -1)
+    if (
+      err.message
+        .trim()
+        .split('\n')[0]
+        .indexOf(`mkdir`) === -1
+    ) {
       console.log('You are missing the docker-compose file')
-    else {
+    } else {
       console.log(`The folder is already created.`)
-      enquirer.ask([{
-        type: 'confirm',
-        default: true,
-        message: 'Do you want to replace the docker-compose',
-        name: 'replace'
-      }]).then(response => {
-        if (response.replace) {
-          console.log(' transfering file to server')
-          execSync(`scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${pkg.name}/docker-compose.yml`)
-          execSync('rm ./docker/docker-compose.prod.yml')
-          console.log(' ✨ done')
-        }
-      })
+      enquirer
+        .ask([
+          {
+            type: 'confirm',
+            default: true,
+            message: 'Do you want to replace the docker-compose',
+            name: 'replace'
+          }
+        ])
+        .then(response => {
+          if (response.replace) {
+            console.log(' transfering file to server')
+            execSync(
+              `scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${
+                pkg.name
+              }/docker-compose.yml`
+            )
+            execSync('rm ./docker/docker-compose.prod.yml')
+            console.log(' ✨ done')
+          }
+        })
     }
   }
 }
@@ -135,45 +158,100 @@ const isFileAvailable = (filepath, cwd = '.') => {
   }
 }
 
-const dockerComposeRun = (flag) => {
+const dockerComposeRun = flag => {
   if (isDockerStuffIsAvailable()) {
-    spawnSync('docker-compose', ['-f', 'docker/docker-compose.yml', 'up', '-d'], { stdio: 'inherit' })
-    spawnSync('docker-compose', ['-f', 'docker/docker-compose.yml', 'logs', '-f'], { stdio: 'inherit' })
+    spawnSync(
+      'docker-compose',
+      ['-f', 'docker/docker-compose.yml', 'up', '-d'],
+      { stdio: 'inherit' }
+    )
+    spawnSync(
+      'docker-compose',
+      ['-f', 'docker/docker-compose.yml', 'logs', '-f'],
+      { stdio: 'inherit' }
+    )
   }
 }
-const dockerStop = () => isDockerStuffIsAvailable() &&
-  spawnSync('docker-compose', ['-f', 'docker/docker-compose.yml', 'stop'], { stdio: 'inherit' })
 
-const dockerBuildScript = (flag) => {
+const dockerPushScript = pkg => {
+  spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`])
+}
+
+const deployScript = () => {
   const pkgJSON = isFileAvailable('package.json')
   if (pkgJSON) {
     const pkg = JSON.parse(pkgJSON)
-    const pkgStr = JSON.stringify({ name: pkg.name, dependencies: pkg.dependencies }, null, 2)
+    if (
+      isCommandAvailable('ansible-playbook') &&
+      isCommandAvailable('docker')
+    ) {
+      dockerBuildScript('latest')
+      dockerPushScript(pkg)
+      spawnSync('ansible-playbook', ['-v', 'deploy/deploy.yml'], {
+        stdio: 'inherit'
+      })
+    }
+  } else {
+    console.log('no node project detected here 🤔')
+  }
+}
+
+const dockerStop = () =>
+  isDockerStuffIsAvailable() &&
+  spawnSync('docker-compose', ['-f', 'docker/docker-compose.yml', 'stop'], {
+    stdio: 'inherit'
+  })
+
+const dockerBuildScript = flag => {
+  const pkgJSON = isFileAvailable('package.json')
+  if (pkgJSON) {
+    const pkg = JSON.parse(pkgJSON)
+    const pkgStr = JSON.stringify(
+      { name: pkg.name, dependencies: pkg.dependencies },
+      null,
+      2
+    )
     fs.writeFileSync('./.pre-package.json', pkgStr)
     spawnSync('python', [pkgPy], { stdio: 'inherit' })
     if (flag === '-f') {
       const image = `registry.jorgeadolfo.com/${pkg.name}:dev`
-      spawnSync('docker', ['build', '-f', 'docker/Dockerfile', '-t', image, '.'], { stdio: 'inherit' })
+      spawnSync(
+        'docker',
+        ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
+        { stdio: 'inherit' }
+      )
+    } else if (flag === 'latest') {
+      const image = `registry.jorgeadolfo.com/${pkg.name}:latest`
+      spawnSync(
+        'docker',
+        ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
+        { stdio: 'inherit' }
+      )
     } else {
-      enquirer.ask([{
-        type: 'input',
-        name: 'registry',
-        default: `registry.jorgeadolfo.com`,
-        message: 'What is the image name'
-      }, {
-        type: 'radio',
-        name: 'version',
-        default: 'dev',
-        choices: [
-          'latest',
-          'dev',
-          pkg.version,
-        ],
-        message: 'Build current version or latest tag'
-      }]).then(answers => {
-        const image = `${answers.registry}/${pkg.name}:${answers.version}`
-        spawnSync('docker', ['build', '-f', 'docker/Dockerfile', '-t', image, '.'], { stdio: 'inherit' })
-      })
+      enquirer
+        .ask([
+          {
+            type: 'input',
+            name: 'registry',
+            default: `registry.jorgeadolfo.com`,
+            message: 'What is the image name'
+          },
+          {
+            type: 'radio',
+            name: 'version',
+            default: 'dev',
+            choices: ['latest', 'dev', pkg.version],
+            message: 'Build current version or latest tag'
+          }
+        ])
+        .then(answers => {
+          const image = `${answers.registry}/${pkg.name}:${answers.version}`
+          spawnSync(
+            'docker',
+            ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
+            { stdio: 'inherit' }
+          )
+        })
     }
   } else {
     console.log('no node project detected here 🤔')
@@ -182,23 +260,19 @@ const dockerBuildScript = (flag) => {
 
 const args = process.argv.slice(2)
 const cmd = args[0]
-const flag = args.lenth > 1 ? args[1] : ''
+const flag = args.length > 1 ? args[1] : ''
 switch (cmd) {
   case 'lint': {
     process.exit(lintScript().status)
-    break
   }
   case 'format': {
     process.exit(formatScript(true).status)
-    break
   }
   case 'test': {
     process.exit(testScript().status)
-    break
   }
   case 'coverage': {
-    testScript({ coverage: true })
-    break
+    process.exit(testScript({ coverage: true }))
   }
   case 'test:w': {
     testScript({ watch: true })
@@ -206,7 +280,6 @@ switch (cmd) {
   }
   case 'lint-different': {
     process.exit(formatScript().status)
-    break
   }
   case 'docker-run': {
     dockerComposeRun(flag)
@@ -217,7 +290,13 @@ switch (cmd) {
     break
   }
   case 'docker-push': {
-    dockerPushScript()
+    const pkgJSON = isFileAvailable('package.json')
+    if (pkgJSON) {
+      const pkg = JSON.parse(pkgJSON)
+      dockerPushScript(pkg)
+    } else {
+      console.log('no node project detected here 🤔')
+    }
     break
   }
   case 'docker-build': {
