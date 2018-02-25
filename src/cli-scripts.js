@@ -182,6 +182,13 @@ const remoteStopApp = () => {
   const pkg = JSON.parse(fs.readFileSync('./package.json'))
   execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml stop" 2> /dev/null`)
 }
+const remoteRemoveScript = () => {
+  // TODO: change pkg to middleware
+  const pkg = JSON.parse(fs.readFileSync('./package.json'))
+  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml stop" 2> /dev/null`)
+  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml rm -f" 2> /dev/null`)
+  execSync(`ssh jorgeadolfo.com "rm -fr /opt/g3org3/${pkg.name}" 2> /dev/null`)
+}
 
 const deployScript = () => {
   const pkgJSON = isFileAvailable('package.json')
@@ -316,6 +323,10 @@ switch (cmd) {
   }
   case 'remote-stop': {
     remoteStopApp() // experimental
+    break
+  }
+  case 'remote-remove': {
+    remoteRemoveScript() // experimental
     break
   }
   case 'deploy-init': {
