@@ -1,46 +1,46 @@
 #!/usr/bin/env node
-const Enquirer = require('enquirer')
-const spawnSync = require('child_process').spawnSync
-const execSync = require('child_process').execSync
-const fs = require('fs')
-const path = require('path')
-const isLinked = __dirname.indexOf('node_modules') === -1
+const Enquirer = require('enquirer');
+const spawnSync = require('child_process').spawnSync;
+const execSync = require('child_process').execSync;
+const fs = require('fs');
+const path = require('path');
+const isLinked = __dirname.indexOf('node_modules') === -1;
 const resolve = filepath =>
-  isLinked ? path.resolve(__dirname, `../${filepath}`) : `./${filepath}`
+  isLinked ? path.resolve(__dirname, `../${filepath}`) : `./${filepath}`;
 
 // setup
-const enquirer = new Enquirer()
-enquirer.register('confirm', require('prompt-confirm'))
-enquirer.register('input', require('prompt-input'))
-enquirer.register('radio', require('prompt-radio'))
+const enquirer = new Enquirer();
+enquirer.register('confirm', require('prompt-confirm'));
+enquirer.register('input', require('prompt-input'));
+enquirer.register('radio', require('prompt-radio'));
 
 // Find paths
-const eslint = resolve('node_modules/eslint')
-const jest = resolve('node_modules/.bin/jest')
-const eslintcli = resolve('node_modules/.bin/eslint')
-const prettierEslint = resolve('node_modules/.bin/prettier-eslint')
-const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js')
-const pkgPy = path.resolve(__dirname, '../helpers/pkg.py')
+const eslint = resolve('node_modules/eslint');
+const jest = resolve('node_modules/.bin/jest');
+const eslintcli = resolve('node_modules/.bin/eslint');
+const prettierEslint = resolve('node_modules/.bin/prettier-eslint');
+const eslintConfigPath = path.resolve(__dirname, '../config/eslintrc.js');
+const pkgPy = path.resolve(__dirname, '../helpers/pkg.py');
 
 // Scripts
 const lintScript = () =>
   spawnSync(eslintcli, ['--config', eslintConfigPath, './src'], {
     stdio: 'inherit'
-  })
+  });
 
 const replaceAll = (target, search, replacement) =>
-  target.replace(new RegExp(search, 'g'), replacement)
+  target.replace(new RegExp(search, 'g'), replacement);
 
 const isCommandAvailable = cmd => {
   try {
-    execSync(`which ${cmd} 2> /dev/null`)
-    return true
+    execSync(`which ${cmd} 2> /dev/null`);
+    return true;
   } catch (err) {
-    console.log(`\n⚠️  ${cmd} is not available.\n`)
+    console.log(`\n⚠️  ${cmd} is not available.\n`);
   }
-}
+};
 const isDockerStuffIsAvailable = () =>
-  isCommandAvailable('docker') && isCommandAvailable('docker-compose')
+  isCommandAvailable('docker') && isCommandAvailable('docker-compose');
 
 const formatScript = listDiferrent => {
   const options = [
@@ -49,21 +49,21 @@ const formatScript = listDiferrent => {
     eslint,
     '--eslint-config-path',
     eslintConfigPath
-  ]
-  if (listDiferrent) options.push('--list-different')
-  else options.push('--write')
-  return spawnSync(prettierEslint, options, { stdio: 'inherit' })
-}
+  ];
+  if (listDiferrent) options.push('--list-different');
+  else options.push('--write');
+  return spawnSync(prettierEslint, options, { stdio: 'inherit' });
+};
 
 const testScript = (options = {}) => {
   if (!lintScript().status) {
-    const flags = []
-    if (options.coverage) flags.push('--coverage')
-    else if (options.watch) flags.push('--watch')
-    return spawnSync(jest, flags, { stdio: 'inherit' })
+    const flags = [];
+    if (options.coverage) flags.push('--coverage');
+    else if (options.watch) flags.push('--watch');
+    return spawnSync(jest, flags, { stdio: 'inherit' });
   }
-  return { status: 1 }
-}
+  return { status: 1 };
+};
 
 /*
 const buildFrontEndScript = () => {
@@ -92,29 +92,31 @@ const buildFrontEndScript = () => {
 */
 
 const deployInitScript = () => {
-  const pkg = JSON.parse(fs.readFileSync('./package.json'))
+  const pkg = JSON.parse(fs.readFileSync('./package.json'));
   try {
     const dockerCompose = fs
       .readFileSync('./docker/docker-compose.yml')
-      .toString()
+      .toString();
     const dockerComposeProd = replaceAll(
       dockerCompose,
       `image: registry.jorgeadolfo.com/${pkg.name}:dev`,
       `image: registry.jorgeadolfo.com/${pkg.name}:latest`
-    )
-    fs.writeFileSync('./docker/docker-compose.prod.yml', dockerComposeProd)
+    );
+    fs.writeFileSync('./docker/docker-compose.prod.yml', dockerComposeProd);
 
-    console.log(` creating ${pkg.name} in the remote server`)
-    execSync(`ssh jorgeadolfo.com "mkdir /opt/g3org3/${pkg.name}" 2> /dev/null`)
+    console.log(` creating ${pkg.name} in the remote server`);
+    execSync(
+      `ssh jorgeadolfo.com "mkdir /opt/g3org3/${pkg.name}" 2> /dev/null`
+    );
 
-    console.log(' transfering file to server')
+    console.log(' transfering file to server');
     execSync(
       `scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${
         pkg.name
       }/docker-compose.yml`
-    )
-    execSync('rm ./docker/docker-compose.prod.yml')
-    console.log(' ✨ done')
+    );
+    execSync('rm ./docker/docker-compose.prod.yml');
+    console.log(' ✨ done');
   } catch (err) {
     if (
       err.message
@@ -122,9 +124,9 @@ const deployInitScript = () => {
         .split('\n')[0]
         .indexOf(`mkdir`) === -1
     ) {
-      console.log('You are missing the docker-compose file')
+      console.log('You are missing the docker-compose file');
     } else {
-      console.log(`The folder is already created.`)
+      console.log(`The folder is already created.`);
       enquirer
         .ask([
           {
@@ -136,27 +138,27 @@ const deployInitScript = () => {
         ])
         .then(response => {
           if (response.replace) {
-            console.log(' transfering file to server')
+            console.log(' transfering file to server');
             execSync(
               `scp ./docker/docker-compose.prod.yml jorgeadolfo.com:/opt/g3org3/${
                 pkg.name
               }/docker-compose.yml`
-            )
-            execSync('rm ./docker/docker-compose.prod.yml')
-            console.log(' ✨ done')
+            );
+            execSync('rm ./docker/docker-compose.prod.yml');
+            console.log(' ✨ done');
           }
-        })
+        });
     }
   }
-}
+};
 
 const isFileAvailable = (filepath, cwd = '.') => {
   try {
-    return fs.readFileSync(`${cwd}/${filepath}`)
+    return fs.readFileSync(`${cwd}/${filepath}`);
   } catch (err) {
-    return false
+    return false;
   }
-}
+};
 
 const dockerComposeRun = flag => {
   if (isDockerStuffIsAvailable()) {
@@ -164,82 +166,96 @@ const dockerComposeRun = flag => {
       'docker-compose',
       ['-f', 'docker/docker-compose.yml', 'up', '-d'],
       { stdio: 'inherit' }
-    )
+    );
     spawnSync(
       'docker-compose',
       ['-f', 'docker/docker-compose.yml', 'logs', '-f'],
       { stdio: 'inherit' }
-    )
+    );
   }
-}
+};
 
 const dockerPushScript = pkg => {
-  spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`], { stdio: 'inherit' })
-}
+  spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`], {
+    stdio: 'inherit'
+  });
+};
 
 const remoteStopApp = () => {
   // TODO: change pkg to middleware
-  const pkg = JSON.parse(fs.readFileSync('./package.json'))
-  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml stop" 2> /dev/null`)
-}
+  const pkg = JSON.parse(fs.readFileSync('./package.json'));
+  execSync(
+    `ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${
+      pkg.name
+    }/docker-compose.yml stop" 2> /dev/null`
+  );
+};
 const remoteRemoveScript = () => {
   // TODO: change pkg to middleware
-  const pkg = JSON.parse(fs.readFileSync('./package.json'))
-  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml stop" 2> /dev/null`)
-  execSync(`ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${pkg.name}/docker-compose.yml rm -f" 2> /dev/null`)
-  execSync(`ssh jorgeadolfo.com "rm -fr /opt/g3org3/${pkg.name}" 2> /dev/null`)
-}
+  const pkg = JSON.parse(fs.readFileSync('./package.json'));
+  execSync(
+    `ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${
+      pkg.name
+    }/docker-compose.yml stop" 2> /dev/null`
+  );
+  execSync(
+    `ssh jorgeadolfo.com "docker-compose -f /opt/g3org3/${
+      pkg.name
+    }/docker-compose.yml rm -f" 2> /dev/null`
+  );
+  execSync(`ssh jorgeadolfo.com "rm -fr /opt/g3org3/${pkg.name}" 2> /dev/null`);
+};
 
 const deployScript = () => {
-  const pkgJSON = isFileAvailable('package.json')
+  const pkgJSON = isFileAvailable('package.json');
   if (pkgJSON) {
-    const pkg = JSON.parse(pkgJSON)
+    const pkg = JSON.parse(pkgJSON);
     if (
       isCommandAvailable('ansible-playbook') &&
       isCommandAvailable('docker')
     ) {
-      dockerBuildScript('latest')
-      dockerPushScript(pkg)
+      dockerBuildScript('latest');
+      dockerPushScript(pkg);
       spawnSync('ansible-playbook', ['-v', 'deploy/deploy.yml'], {
         stdio: 'inherit'
-      })
+      });
     }
   } else {
-    console.log('no node project detected here 🤔')
+    console.log('no node project detected here 🤔');
   }
-}
+};
 
 const dockerStop = () =>
   isDockerStuffIsAvailable() &&
   spawnSync('docker-compose', ['-f', 'docker/docker-compose.yml', 'stop'], {
     stdio: 'inherit'
-  })
+  });
 
 const dockerBuildScript = flag => {
-  const pkgJSON = isFileAvailable('package.json')
+  const pkgJSON = isFileAvailable('package.json');
   if (pkgJSON) {
-    const pkg = JSON.parse(pkgJSON)
+    const pkg = JSON.parse(pkgJSON);
     const pkgStr = JSON.stringify(
       { name: pkg.name, dependencies: pkg.dependencies },
       null,
       2
-    )
-    fs.writeFileSync('./.pre-package.json', pkgStr)
-    spawnSync('python', [pkgPy], { stdio: 'inherit' })
+    );
+    fs.writeFileSync('./.pre-package.json', pkgStr);
+    spawnSync('python', [pkgPy], { stdio: 'inherit' });
     if (flag === '-f') {
-      const image = `registry.jorgeadolfo.com/${pkg.name}:dev`
+      const image = `registry.jorgeadolfo.com/${pkg.name}:dev`;
       spawnSync(
         'docker',
         ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
         { stdio: 'inherit' }
-      )
+      );
     } else if (flag === 'latest') {
-      const image = `registry.jorgeadolfo.com/${pkg.name}:latest`
+      const image = `registry.jorgeadolfo.com/${pkg.name}:latest`;
       spawnSync(
         'docker',
         ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
         { stdio: 'inherit' }
-      )
+      );
     } else {
       enquirer
         .ask([
@@ -258,82 +274,82 @@ const dockerBuildScript = flag => {
           }
         ])
         .then(answers => {
-          const image = `${answers.registry}/${pkg.name}:${answers.version}`
+          const image = `${answers.registry}/${pkg.name}:${answers.version}`;
           spawnSync(
             'docker',
             ['build', '-f', 'docker/Dockerfile', '-t', image, '.'],
             { stdio: 'inherit' }
-          )
-        })
+          );
+        });
     }
   } else {
-    console.log('no node project detected here 🤔')
+    console.log('no node project detected here 🤔');
   }
-}
+};
 
-const args = process.argv.slice(2)
-const cmd = args[0]
-const flag = args.length > 1 ? args[1] : ''
+const args = process.argv.slice(2);
+const cmd = args[0];
+const flag = args.length > 1 ? args[1] : '';
 switch (cmd) {
   case 'lint': {
-    process.exit(lintScript().status)
+    process.exit(lintScript().status);
   }
   case 'format': {
-    formatScript(true).status
-    break
+    formatScript(true).status;
+    break;
   }
   case 'test': {
-    process.exit(testScript().status)
+    process.exit(testScript().status);
   }
   case 'coverage': {
-    process.exit(testScript({ coverage: true }))
+    process.exit(testScript({ coverage: true }));
   }
   case 'test:w': {
-    testScript({ watch: true })
-    break
+    testScript({ watch: true });
+    break;
   }
   case 'lint-different': {
-    process.exit(formatScript().status)
+    process.exit(formatScript().status);
   }
   case 'docker-run': {
-    dockerComposeRun(flag)
-    break
+    dockerComposeRun(flag);
+    break;
   }
   case 'docker-stop': {
-    dockerStop()
-    break
+    dockerStop();
+    break;
   }
   case 'docker-push': {
-    const pkgJSON = isFileAvailable('package.json')
+    const pkgJSON = isFileAvailable('package.json');
     if (pkgJSON) {
-      const pkg = JSON.parse(pkgJSON)
-      dockerPushScript(pkg)
+      const pkg = JSON.parse(pkgJSON);
+      dockerPushScript(pkg);
     } else {
-      console.log('no node project detected here 🤔')
+      console.log('no node project detected here 🤔');
     }
-    break
+    break;
   }
   case 'docker-build': {
-    dockerBuildScript(flag)
-    break
+    dockerBuildScript(flag);
+    break;
   }
   case 'deploy': {
-    deployScript()
-    break
+    deployScript();
+    break;
   }
   case 'remote-stop': {
-    remoteStopApp() // experimental
-    break
+    remoteStopApp(); // experimental
+    break;
   }
   case 'remote-remove': {
-    remoteRemoveScript() // experimental
-    break
+    remoteRemoveScript(); // experimental
+    break;
   }
   case 'deploy-init': {
-    deployInitScript()
-    break
+    deployInitScript();
+    break;
   }
   default:
-    console.log(`Unknown command "${cmd}".`)
-    process.exit(1)
+    console.log(`Unknown command "${cmd}".`);
+    process.exit(1);
 }
