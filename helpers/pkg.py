@@ -1,11 +1,11 @@
-print "-> loading pkgs ..."
+print("-> loading pkgs ...")
 pkg = open('./package.json')
 tmp = open('./.pre-package.json').read()
 
 inDeps = False
 deps = ""
 
-print "-> reading deps ..."
+print("-> reading deps ...")
 for line in pkg:
     if "\"dependencies" in line:
         inDeps = True
@@ -22,9 +22,9 @@ pkg.close()
 tmp = open('./.pre-package.json', 'w')
 newPkg = head + "\n  \"dependencies\": {\n" + deps + rest
 
-print "-> writing to pre-pkg ..."
+print("-> writing to pre-pkg ...")
 
 tmp.write(newPkg)
 tmp.close()
 
-print "-> Done"
+print("-> Done")

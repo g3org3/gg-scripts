@@ -174,7 +174,7 @@ const dockerComposeRun = flag => {
 }
 
 const dockerPushScript = pkg => {
-  spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`])
+  spawnSync('docker', ['push', `registry.jorgeadolfo.com/${pkg.name}:latest`], { stdio: 'inherit' })
 }
 
 const remoteStopApp = () => {
